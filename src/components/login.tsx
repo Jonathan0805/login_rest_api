@@ -1,34 +1,61 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button, Input, Form } from 'antd';
 import 'antd/dist/antd.css';
+import axios from "axios";
 
 export default function Login() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [invalidCred, setinvalidCred] = useState(false);
 
     // @ts-ignore
-    const users = useSelector(state => state.users);
+    // const users = useSelector(state => state.users);
 
     const navigate = useNavigate();
-    const dispatch = useDispatch();
+    // const dispatch = useDispatch();
+    const location = useLocation();
 
     const onFinish = (values: any) => {
-        console.log('Success:', values);
+        
 
-        const payload = users.find(user => user.username === username && user.password === password)
+        // const payload = users.find(user => user.username === username && user.password === password)
 
-        if (payload) {
-            dispatch({
-                type: "LOGIN",
-                payload
+        // if (payload) {
+        //     dispatch({
+        //         type: "LOGIN",
+        //         payload
+        //     })
+        //     alert("Login successful");
+        //     navigate("/");
+        // } else {
+        //     alert("Invalid username or password");
+        // }
+
+        axios
+            .post('http://restapi.adequateshop.com/api/authaccount/login', {
+                email: username,
+                password: password,
             })
-            alert("Login successful");
-            navigate("/");
-        } else {
-            alert("Invalid username or password");
-        }
+            .then(function (response) {
+                console.log('Success:', values);
+                if (response.data.message === 'success') {
+                    navigate('/home', 
+                    {
+                        state: {
+                            name: username,
+                            message: 'You have logged in succssfully',
+                        },
+                    }
+                    );
+                } else {
+                    setinvalidCred(true);
+                    navigate('/', {
+                        state: { message: response.data.message },
+                    });
+                }
+            });
     };
 
     const onFinishFailed = (errorInfo: any) => {
@@ -80,6 +107,7 @@ export default function Login() {
                     </Form.Item>
                 </Form>
             </div>
+            {invalidCred && <h3 style={{ color: 'red' }}>{location.state.message}</h3>}
             <Button type="primary"
                 onClick={() => navigate("/signup")}
             >
